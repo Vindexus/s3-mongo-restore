@@ -76,7 +76,7 @@ function restore(config, filePath) {
       command = `mongorestore -h ${host} --port=${port} -d ${database} -u ${username} ${gzipFlag} --archive=${filePath}`;
     }
 
-    exec(command, (err, stdout, stderr) => {
+    exec(command, {maxBuffer: 1024 * 500}, (err, stdout, stderr) => {
       if (err) {
         // Most likely, mongodump isn't installed or isn't accessible
         reject({error: 1, code: err.code, message: err.message});
