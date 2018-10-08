@@ -142,46 +142,31 @@ function downloadBackup(s3, config, backupKey) {
 
   return new Promise((resolve, reject) => {
     console.log(`downloading`)
-    s3.getObject(obj, (err, data) => {
-      console.log('get object err', err);
-      if (err) {
-        reject({error: 1, code: err.code, message: err.message})
-      } else {
-        let stream = fs.createWriteStream(path.resolve(os.tmpdir(), backupKey));
+    const s3 = new AWS.S3()
+    const stream = fs.createWriteStream(path.resolve(os.tmpdir(), backupKey))
 
-        stream.on('open', err => {
-          console.log(`write some data`)
-          stream.on('finish', () => {
-            console.log(`finish called`)
-            resolve({
-              error: 0,
-              filePath: path.resolve(os.tmpdir(), backupKey)
-            })
-          })
+    stream.on('error', err => {
+      console.log('err', err)
+      reject({error: 1, message: err.message, code: err.code})
+      return
+    })
 
-          stream.on('error', err => {
-            console.log('err', err)
-            reject({error: 1, message: err.message, code: err.code})
-            return
-          })
-
-          stream.write(data.Body)
-          stream.end()
+    s3.getObject(obj)
+      .on('httpData', function(chunk) {
+        stream.write(chunk)
+      })
+      .on('httpDone', function() {
+        stream.end()
+        console.log(`finish called`)
+        resolve({
+          error: 0,
+          filePath: path.resolve(os.tmpdir(), backupKey)
         })
-
-
-        // Reject in case of an error in writing data
-        
-        console.log('Object.keys(data)', Object.keys(data))
-        console.log('data.Body.length', data.Body.length)
-        //stream.end()
-        setTimeout(() => {
-
-        }, 0)
-      };
-    });
+      })
+      .send()
+    })
   })
-};
+}
 
 // Validate, Download, Restore Backup
 function RestoreBackup(config, databaseToRestore) {
