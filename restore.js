@@ -145,26 +145,19 @@ function downloadBackup(s3, config, backupKey) {
     const s3 = new AWS.S3()
     const stream = fs.createWriteStream(path.resolve(os.tmpdir(), backupKey))
 
-    stream.on('error', err => {
-      console.log('err', err)
-      reject({error: 1, message: err.message, code: err.code})
-      return
+    stream.on('close', function(){
+      resolve({
+        error: 0,
+        filePath: path.resolve(os.tmpdir(), backupKey)
+      })
     })
 
     s3.getObject(obj)
-      .on('httpData', function(chunk) {
-        stream.write(chunk)
-      })
-      .on('httpDone', function() {
-        stream.end()
-        console.log(`finish called`)
-        resolve({
-          error: 0,
-          filePath: path.resolve(os.tmpdir(), backupKey)
-        })
-      })
-      .send()
-    })
+      .createReadStream()
+      .on('error', function(err){
+        console.log(`err`)
+        reject({error: 1, message: err.message, code: err.code})
+      }).pipe(stream)
   })
 }
 
