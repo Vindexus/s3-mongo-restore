@@ -56,8 +56,8 @@ function restore(config, filePath) {
     const database = config.mongodb.database,
       password = config.mongodb.password || null,
       username = config.mongodb.username || null,
-      host = config.mongodb.hosts[0].host || null,
-      port = config.mongodb.hosts[0].port || null;
+      host = config.mongodb.host || null,
+      port = config.mongodb.port || null;
 
     let gzipFlag = "--gzip"
     let dropFlag = ""
